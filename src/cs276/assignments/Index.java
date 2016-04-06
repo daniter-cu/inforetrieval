@@ -1,6 +1,3 @@
-// TEST BY TANGUY
-
-
 package cs276.assignments;
 
 import cs276.util.Pair;
