@@ -46,12 +46,15 @@ public class Index {
 	 * so that you can read it back during retrieval
 	 * 
 	 * */
-	private static void writePosting(FileChannel fc, PostingList posting)
+	private static void writePosting(RandomAccessFile fc, PostingList posting)
 			throws IOException {
 		/*
 		 * TODO: Your code here
 		 *	 
 		 */
+        postingDict.put(posting.getTermId(),
+                new Pair<Long,Integer>(fc.position(), posting.getList().size()));
+        index.writePosting(fc, posting);
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -170,15 +173,9 @@ public class Index {
 			 *       Write all posting lists for all terms to file (bfc)
 			 */
             for(Map.Entry<Integer,PostingList> entry : sortedpostings){
-                PostingList pl = entry.getValue();
-                bfc.writeInt(entry.getKey()); // write the termId
-                bfc.writeInt(pl.getList().size()); // write size of posting list
-                for(Integer p: pl.getList()){
-                    bfc.writeInt(p);
-                }
+                index.writePosting(bfc, entry.getValue());
             }
-            System.err.println(bfc.getFilePointer());
-			
+
 			bfc.close();
 			postings.clear();
 		}
@@ -211,6 +208,38 @@ public class Index {
 			 *       the two blocks (based on term ID, perhaps?).
 			 *       
 			 */
+            PostingList a = index.readPosting(bf1);
+            PostingList b = index.readPosting(bf2);
+            while(true){
+                if(a == null){
+                    while(b != null){
+                        writePosting(mf, b);
+                        b = index.readPosting(bf2);
+                    }
+                    break;
+                }
+                if(b == null){
+                    while(a != null){
+                        writePosting(mf, a);
+                        a = index.readPosting(bf1);
+                    }
+                    break;
+                }
+
+                if (a.getTermId() < b.getTermId()){
+                    writePosting(mf, a);
+                    a = index.readPosting(bf1);
+                } else if (a.getTermId() > b.getTermId()) {
+                    writePosting(mf, b);
+                    b = index.readPosting(bf2);
+                } else { // they are equal, we have to merge them
+                    a.getList().addAll(b.getList()); // note that all docs have to be unique
+                    Collections.sort(a.getList());
+                    writePosting(mf, a);
+                    a = index.readPosting(bf1);
+                    b = index.readPosting(bf2);
+                }
+            }
 			
 			bf1.close();
 			bf2.close();

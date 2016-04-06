@@ -1,11 +1,12 @@
 package cs276.assignments;
 
-import java.nio.channels.FileChannel;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 public class VBIndex implements BaseIndex {
 
 	@Override
-	public PostingList readPosting(FileChannel fc) {
+	public PostingList readPosting(RandomAccessFile fc) throws IOException {
 		/*
 		 * TODO: Your code here
 		 */
@@ -13,7 +14,7 @@ public class VBIndex implements BaseIndex {
 	}
 
 	@Override
-	public void writePosting(FileChannel fc, PostingList p) {
+	public void writePosting(RandomAccessFile fc, PostingList p) throws IOException{
 		/*
 		 * TODO: Your code here
 		 */
