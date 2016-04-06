@@ -167,8 +167,17 @@ public class Index {
 			
 			/*
 			 * TODO: Your code here
-			 *       Write all posting lists for all terms to file (bfc) 
+			 *       Write all posting lists for all terms to file (bfc)
 			 */
+            for(Map.Entry<Integer,PostingList> entry : sortedpostings){
+                PostingList pl = entry.getValue();
+                bfc.writeInt(entry.getKey()); // write the termId
+                bfc.writeInt(pl.getList().size()); // write size of posting list
+                for(Integer p: pl.getList()){
+                    bfc.writeInt(p);
+                }
+            }
+            System.err.println(bfc.getFilePointer());
 			
 			bfc.close();
 			postings.clear();
