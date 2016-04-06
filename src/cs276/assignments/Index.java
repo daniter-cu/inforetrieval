@@ -1,5 +1,3 @@
-// TEST BY TANGUY #2 - Don't F-up Dan's Git
-
 package cs276.assignments;
 
 import cs276.util.Pair;
@@ -12,9 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.LinkedList;
+import java.util.*;
 
 public class Index {
 
@@ -30,6 +26,9 @@ public class Index {
 	// Block queue
 	private static LinkedList<File> blockQueue
 		= new LinkedList<File>();
+
+	private static Map<Integer, PostingList> postings
+		= new HashMap<Integer, PostingList>();
 
 	// Total file counter
 	private static int totalFileCount = 0;
@@ -124,16 +123,45 @@ public class Index {
 						 *       For each term, build up a list of
 						 *       documents in which the term occurs
 						 */
+						int termId;
+						if(!termDict.containsKey(token)){
+							wordIdCounter++;
+							termDict.put(token, wordIdCounter);
+							termId = wordIdCounter;
+						}else{
+							termId = termDict.get(token);
+						}
+						PostingList posting;
+						if(postings.containsKey(termId)){
+							posting = postings.get(termId);
+						} else {
+							posting = new PostingList(termId);
+							postings.put(termId, posting);
+						}
+						posting.getList().add(docIdCounter);
 					}
 				}
 				reader.close();
 			}
-
+            System.err.println("Finished one round");
+      
 			/* Sort and output */
+            List<Map.Entry<Integer,PostingList>> sortedpostings
+                    = new ArrayList<Map.Entry<Integer,PostingList>>(postings.entrySet());
+
+            Collections.sort(
+                    sortedpostings
+                    ,   new Comparator<Map.Entry<Integer,PostingList>>() {
+                        public int compare(Map.Entry<Integer,PostingList> a, Map.Entry<Integer,PostingList> b) {
+                            return Integer.compare(a.getKey(), b.getKey());
+                        }
+                    }
+            );
+
 			if (!blockFile.createNewFile()) {
-				System.err.println("Create new block failure.");
-				return;
-			}
+                System.err.println("Create new block failure.");
+                return;
+            }
 			
 			RandomAccessFile bfc = new RandomAccessFile(blockFile, "rw");
 			
@@ -143,6 +171,7 @@ public class Index {
 			 */
 			
 			bfc.close();
+			postings.clear();
 		}
 
 		/* Required: output total number of files. */
