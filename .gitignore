@@ -1,2 +1,4 @@
 *.class
+classes/
 bin/
+.project
