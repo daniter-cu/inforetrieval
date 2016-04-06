@@ -53,7 +53,7 @@ public class Index {
 		 *	 
 		 */
         postingDict.put(posting.getTermId(),
-                new Pair<Long,Integer>(fc.position(), posting.getList().size()));
+                new Pair<Long,Integer>(fc.getFilePointer(), posting.getList().size()));
         index.writePosting(fc, posting);
 	}
 
