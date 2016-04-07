@@ -1,41 +1,55 @@
 package cs276.assignments;
 
-import java.io.EOFException;
+
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 
 public class BasicIndex implements BaseIndex{
 
+	static final int INTSIZE = (Integer.SIZE/Byte.SIZE);
+
 	@Override
-	public PostingList readPosting(RandomAccessFile fc) throws IOException{
+	public PostingList readPosting(FileChannel fc) throws IOException{
 		/*
 		 * TODO: Your code here
 		 *       Read and return the postings list from the given file.
 		 */
-		int termId;
-		try {
-			termId = fc.readInt();
-		} catch (EOFException e) {
+
+		ByteBuffer buf = ByteBuffer.allocate(INTSIZE * 2); // term id and postings length
+		int ret = fc.read(buf);
+		if (ret == 0 || ret == -1 ){
 			return null;
 		}
-		PostingList pl = new PostingList(termId);
-		int size = fc.readInt();
+		buf.flip();
+		int termId = buf.getInt();
+		int size = buf.getInt();
+		ArrayList<Integer> postings = new ArrayList<Integer>(size);
+		buf = ByteBuffer.allocate(INTSIZE* size);
+		fc.read(buf);
+		buf.flip();
 		for(int i = 0; i < size; i++){
-			pl.getList().add(fc.readInt());
+			postings.add(buf.getInt());
 		}
-		return pl;
+
+		return new PostingList(termId, postings);
 	}
 
 	@Override
-	public void writePosting(RandomAccessFile fc, PostingList p) throws IOException {
+	public void writePosting(FileChannel fc, PostingList p) throws IOException {
 		/*
 		 * TODO: Your code here
 		 *       Write the given postings list to the given file.
 		 */
-		fc.writeInt(p.getTermId()); // write the termId
-		fc.writeInt(p.getList().size()); // write size of posting list
+		ByteBuffer buf = ByteBuffer.allocate(INTSIZE * (p.getList().size()+2));
+		buf.putInt(p.getTermId());
+		buf.putInt(p.getList().size());
 		for(Integer post: p.getList()){
-			fc.writeInt(post);
+			buf.putInt(post);
 		}
+		buf.flip();
+		int ret = fc.write(buf);
+		assert(ret == INTSIZE * (p.getList().size()+2));
 	}
 }

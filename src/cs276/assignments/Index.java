@@ -54,7 +54,7 @@ public class Index {
 		 */
         postingDict.put(posting.getTermId(),
                 new Pair<Long,Integer>(fc.getFilePointer(), posting.getList().size()));
-        index.writePosting(fc, posting);
+        index.writePosting(fc.getChannel(), posting);
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -114,7 +114,8 @@ public class Index {
 			for (File file : filelist) {
 				++totalFileCount;
 				String fileName = block.getName() + "/" + file.getName();
-				docDict.put(fileName, docIdCounter++);
+                int docId = docIdCounter++;
+				docDict.put(fileName, docId);
 				
 				BufferedReader reader = new BufferedReader(new FileReader(file));
 				String line;
@@ -141,7 +142,10 @@ public class Index {
 							posting = new PostingList(termId);
 							postings.put(termId, posting);
 						}
-						posting.getList().add(docIdCounter);
+                        if(posting.getList().size() == 0
+                                || posting.getList().get(posting.getList().size()-1) != docId) {
+                            posting.getList().add(docId);
+                        }
 					}
 				}
 				reader.close();
@@ -173,7 +177,7 @@ public class Index {
 			 *       Write all posting lists for all terms to file (bfc)
 			 */
             for(Map.Entry<Integer,PostingList> entry : sortedpostings){
-                index.writePosting(bfc, entry.getValue());
+                index.writePosting(bfc.getChannel(), entry.getValue());
             }
 
 			bfc.close();
@@ -208,36 +212,36 @@ public class Index {
 			 *       the two blocks (based on term ID, perhaps?).
 			 *       
 			 */
-            PostingList a = index.readPosting(bf1);
-            PostingList b = index.readPosting(bf2);
+            PostingList a = index.readPosting(bf1.getChannel());
+            PostingList b = index.readPosting(bf2.getChannel());
             while(true){
                 if(a == null){
                     while(b != null){
                         writePosting(mf, b);
-                        b = index.readPosting(bf2);
+                        b = index.readPosting(bf2.getChannel());
                     }
                     break;
                 }
                 if(b == null){
                     while(a != null){
                         writePosting(mf, a);
-                        a = index.readPosting(bf1);
+                        a = index.readPosting(bf1.getChannel());
                     }
                     break;
                 }
 
                 if (a.getTermId() < b.getTermId()){
                     writePosting(mf, a);
-                    a = index.readPosting(bf1);
+                    a = index.readPosting(bf1.getChannel());
                 } else if (a.getTermId() > b.getTermId()) {
                     writePosting(mf, b);
-                    b = index.readPosting(bf2);
+                    b = index.readPosting(bf2.getChannel());
                 } else { // they are equal, we have to merge them
                     a.getList().addAll(b.getList()); // note that all docs have to be unique
                     Collections.sort(a.getList());
                     writePosting(mf, a);
-                    a = index.readPosting(bf1);
-                    b = index.readPosting(bf2);
+                    a = index.readPosting(bf1.getChannel());
+                    b = index.readPosting(bf2.getChannel());
                 }
             }
 			
