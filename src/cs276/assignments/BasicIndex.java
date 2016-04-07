@@ -8,8 +8,6 @@ import java.util.ArrayList;
 
 public class BasicIndex implements BaseIndex{
 
-	static final int INTSIZE = (Integer.SIZE/Byte.SIZE);
-
 	@Override
 	public PostingList readPosting(FileChannel fc) throws IOException{
 		/*
