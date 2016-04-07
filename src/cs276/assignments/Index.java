@@ -150,8 +150,7 @@ public class Index {
 				}
 				reader.close();
 			}
-            System.err.println("Finished one round");
-      
+
 			/* Sort and output */
             List<Map.Entry<Integer,PostingList>> sortedpostings
                     = new ArrayList<Map.Entry<Integer,PostingList>>(postings.entrySet());

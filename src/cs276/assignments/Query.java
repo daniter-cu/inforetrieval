@@ -111,6 +111,10 @@ public class Query {
 			LinkedList<PostingList> postings = new LinkedList<PostingList>();
 			String[] queries = line.split("\\s+");
 			for (String word : queries) {
+				if(termDict.get(word)  == null ){
+					System.out.println("no results found");
+					return;
+				}
 				indexFile.seek(posDict.get(termDict.get(word)));
 				postings.add(index.readPosting(indexFile.getChannel()));
 			}
